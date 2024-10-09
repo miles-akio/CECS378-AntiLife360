@@ -68,20 +68,24 @@ Before running the application, ensure you have the following:
 The project has the following structure:
 
 ```
-CECS378-AntiLife360/
+AntiLife360/
 │
 ├── app/
 │   ├── src/
 │   │   └── main/
-│   │       ├── java/
-│   │       │   └── com/example/antitrackingapp/
-│   │       │       └── MainActivity.kt
+│   │       ├── java/com/example/antitrackingapp/
+│   │       │   └── MainActivity.kt      # Main Android Activity in Kotlin for setting mock location
 │   │       └── res/
 │   │           └── layout/
-│   │               └── activity_main.xml
-│   └── build.gradle
-├── .gitignore
-└── build.gradle
+│   │               └── activity_main.xml # XML layout file for the main UI (button to set mock location)
+│   └── build.gradle                      # Build configuration file for Android dependencies
+│
+├── scripts/
+│   ├── NetworkLogger.py                  # Python script to log network requests and responses
+│   └── vpn_block.sh                      # Bash script to block Life360 servers using VPN
+│
+├── .gitignore                            # Git ignore file to exclude unnecessary files from version control
+└── README.md                             # Project README with setup, description, and instructions
 ```
 
 ### Main Components
