@@ -100,9 +100,9 @@ This README provides an overview of the project, its structure, installation, an
 1. **Launch the Android App** on your phone and click the "Block Tracking" button to start spoofing your GPS location.
    - When GPS spoofing is active, Life360 will receive fake coordinates, effectively preventing accurate tracking.
 
-2. (Optional) **Monitor Life360 Network Traffic** by running the Python script, which will log the network requests made by Life360 for analysis.
+2. **Monitor Life360 Network Traffic** by running the Python script, which will log the network requests made by Life360 for analysis.
 
-3. (Optional) **Set up VPN-based blocking** using the provided Bash script to block API calls to Life360’s servers.
+3. **Set up VPN-based blocking** using the provided Bash script to block API calls to Life360’s servers.
 
 ---
 
@@ -133,12 +133,12 @@ antitracking-life360/
 The core logic for the app is implemented here. The app uses Android’s `LocationManager` to set up a mock location provider. When the "Block Tracking" button is clicked, the app injects fake GPS coordinates (latitude/longitude) into the system, and these coordinates are picked up by apps like Life360, effectively preventing them from knowing your real location.
 
 ### **2. `activity_main.xml`**
-The simple UI for the app, containing a button that users click to toggle between "Block Tracking" and "Unblock Tracking."
+The simple UI for the app, contains a button that users click to toggle between "Block Tracking" and "Unblock Tracking."
 
-### **3. `NetworkLogger.py` (Optional)**
+### **3. `NetworkLogger.py`**
 A Python script that uses the `requests` library to capture HTTP requests and responses. It logs network traffic that could provide insight into what data Life360 sends or receives, offering another layer of analysis.
 
-### **4. `vpn_block.sh` (Optional)**
+### **4. `vpn_block.sh`**
 A Bash script that configures OpenVPN or other VPN services to block specific API calls made to Life360 servers. This is an optional feature for users who want to ensure no traffic is sent to Life360 at the network level.
 
 ---
@@ -162,7 +162,3 @@ Further reverse engineering can reveal more about how Life360 collects data. Too
 ## **Conclusion**
 
 This project offers a privacy-focused solution for users who wish to block or fake their location when using Life360. By using GPS spoofing and optional network blocking, users can protect their real location data from being tracked by third-party apps.
-
----
-
-Let me know if you'd like any additional clarifications for the README file or if you want further adjustments to the app!
