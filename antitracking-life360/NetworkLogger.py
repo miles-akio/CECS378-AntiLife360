@@ -24,3 +24,4 @@ try:
     log_response(resp)
 except requests.exceptions.RequestException as e:
     print('Request failed:', e)
+
