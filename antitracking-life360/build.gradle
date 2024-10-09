@@ -1,0 +1,6 @@
+dependencies {
+    // OkHttp library for making network requests
+    implementation 'com.squareup.okhttp3:okhttp:4.9.0'
+
+    // Other dependencies for Android application (optional, depending on project setup)
+}
