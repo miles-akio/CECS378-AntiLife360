@@ -1,50 +1,72 @@
 package com.example.antitrackingapp
 
 import android.Manifest
+import android.content.Context
 import android.content.pm.PackageManager
 import android.location.Location
+import android.location.LocationListener
+import android.location.LocationManager
 import android.os.Bundle
 import android.provider.Settings
 import android.widget.Button
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
-import okhttp3.OkHttpClient
-import okhttp3.Request
-import okhttp3.Response
-import java.io.IOException
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(), LocationListener {
 
-    // Declare UI elements
-    private lateinit var setLocationButton: Button
-
-    // Mock location coordinates (San Francisco in this example)
-    private val mockLatitude = 37.7749
-    private val mockLongitude = -122.4194
+    private lateinit var pauseLocationButton: Button
+    private var mockLatitude = 0.0  // Variables to hold current coordinates
+    private var mockLongitude = 0.0
+    private lateinit var locationManager: LocationManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        // Initialize the button and set up a click listener
-        setLocationButton = findViewById(R.id.setLocationButton)
-        setLocationButton.setOnClickListener {
-            // Check if mock location is enabled
-            if (isMockLocationEnabled()) {
-                // Set mock location if enabled
-                setMockLocation(mockLatitude, mockLongitude)
-            } else {
-                // Prompt the user to enable mock location in Developer Options
-                Toast.makeText(this, "Please enable mock locations in Developer Options", Toast.LENGTH_LONG).show()
-            }
+        pauseLocationButton = findViewById(R.id.pauseLocationButton)
+
+        // Initialize LocationManager to get current location
+        locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
+
+        // Request permission to access location
+        if (ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
+                1
+            )
+        } else {
+            locationManager.requestLocationUpdates(
+                LocationManager.GPS_PROVIDER, 0, 0f, this
+            )
         }
 
-        // Optional: Function to monitor network requests
-        monitorNetworkRequests()
+        // Set the mock location to the current location when the button is clicked
+        pauseLocationButton.setOnClickListener {
+            if (isMockLocationEnabled()) {
+                setMockLocation(mockLatitude, mockLongitude)
+            } else {
+                Toast.makeText(this, "Enable mock locations in Developer Options", Toast.LENGTH_LONG).show()
+            }
+        }
     }
 
-    // Function to check if mock location is enabled on the device
+    // Automatically detects current location
+    override fun onLocationChanged(location: Location) {
+        mockLatitude = location.latitude
+        mockLongitude = location.longitude
+        Toast.makeText(this, "Current location detected: $mockLatitude, $mockLongitude", Toast.LENGTH_LONG).show()
+    }
+
+    // Checks if mock location is enabled
     private fun isMockLocationEnabled(): Boolean {
         return Settings.Secure.getInt(
             contentResolver,
@@ -52,9 +74,8 @@ class MainActivity : AppCompatActivity() {
         ) != 0
     }
 
-    // Function to set mock location
+    // Sets the mock location to the user's current location
     private fun setMockLocation(latitude: Double, longitude: Double) {
-        // Request location permission if not granted
         if (ActivityCompat.checkSelfPermission(
                 this,
                 Manifest.permission.ACCESS_FINE_LOCATION
@@ -68,7 +89,6 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
-        // Create a mock location object and assign latitude and longitude
         val mockLocation = Location("gps").apply {
             this.latitude = latitude
             this.longitude = longitude
@@ -76,35 +96,14 @@ class MainActivity : AppCompatActivity() {
             this.elapsedRealtimeNanos = System.nanoTime()
         }
 
-        // Notify the user that the mock location is set
         Toast.makeText(this, "Mock location set to: $latitude, $longitude", Toast.LENGTH_LONG).show()
     }
 
-    // Function to monitor network requests (Optional, for network logging)
-    private fun monitorNetworkRequests() {
-        val client = OkHttpClient()
+    override fun onProviderDisabled(provider: String) {
+        Toast.makeText(this, "Location provider disabled", Toast.LENGTH_LONG).show()
+    }
 
-        // Create an HTTP GET request to a placeholder API
-        val request = Request.Builder()
-            .url("https://jsonplaceholder.typicode.com/posts") // Placeholder API for testing
-            .build()
-
-        // Send the network request asynchronously
-        client.newCall(request).enqueue(object : okhttp3.Callback {
-            override fun onFailure(call: okhttp3.Call, e: IOException) {
-                // Handle request failure and notify the user
-                runOnUiThread {
-                    Toast.makeText(this@MainActivity, "Network request failed: ${e.message}", Toast.LENGTH_LONG).show()
-                }
-            }
-
-            override fun onResponse(call: okhttp3.Call, response: Response) {
-                // Handle request success and notify the user
-                val responseData = response.body?.string()
-                runOnUiThread {
-                    Toast.makeText(this@MainActivity, "Network request succeeded: $responseData", Toast.LENGTH_LONG).show()
-                }
-            }
-        })
+    override fun onProviderEnabled(provider: String) {
+        Toast.makeText(this, "Location provider enabled", Toast.LENGTH_LONG).show()
     }
 }
