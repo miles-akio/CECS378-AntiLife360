@@ -10,9 +10,17 @@ def log_request(req):
 def log_response(resp):
     print(f"Response: {resp.status_code} \nHeaders: {resp.headers} \nContent: {resp.content}")
 
-# Example of logging a GET request to Life360's API endpoint
-req = requests.Request('GET', 'https://life360-api-endpoint.com')
+# Example of logging a GET request to a placeholder API endpoint
+url = 'https://jsonplaceholder.typicode.com/posts'  # Placeholder API for testing
+req = requests.Request('GET', url)
 prep = req.prepare()
+
+# Log the request
 log_request(prep)
-resp = session.send(prep)
-log_response(resp)
+
+# Send the request and log the response
+try:
+    resp = session.send(prep)
+    log_response(resp)
+except requests.exceptions.RequestException as e:
+    print('Request failed:', e)
