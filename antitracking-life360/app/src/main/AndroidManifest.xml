@@ -1,0 +1,4 @@
+<!-- Make sure you request the necessary location permissions and enable mock location functionality -->
+<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" /> 
+<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+<uses-permission android:name="android.permission.ACCESS_MOCK_LOCATION" />
