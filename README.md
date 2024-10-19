@@ -1,164 +1,126 @@
-# CECS 378 Sec 02 - Anti-Life 360 Android Application
-
-## **Project Overview**
-
-This project aims to block Life360, a popular family-tracking app, from tracking and sending the user’s location data to its servers. The app achieves this by spoofing GPS coordinates on the user’s Android device, effectively feeding false location data to Life360 and similar location-tracking apps. Additionally, optional features such as network traffic monitoring and VPN-based blocking can be implemented for enhanced privacy control.
-
-This README provides an overview of the project, its structure, installation, and key technical concepts.
+Here is a fully updated README, including the latest version of the code structure and detailed instructions:
 
 ---
 
-## **Table of Contents**
+# AntiLife360 App
 
-1. [Key Features](#key-features)
-2. [Technologies Used](#technologies-used)
-3. [Installation](#installation)
-4. [Usage](#usage)
-5. [Project Structure](#project-structure)
-6. [Explanation of Key Components](#explanation-of-key-components)
-7. [Limitations and Future Improvements](#limitations-and-future-improvements)
+**AntiLife360** is an Android app designed to block Life360 from tracking user location and monitor the data collected by the Life360 app. This app allows users to set mock locations to avoid real-time tracking and can block Life360 traffic via VPN. 
 
----
+Additionally, the project provides a Python script for logging network requests to analyze data traffic and a bash script to block Life360 servers using VPN.
 
-## **Key Features**
-
-- **GPS Spoofing:** The app spoofs GPS location on Android, sending fake location data to prevent Life360 from tracking real-time location.
-- **Location Blocking:** Users can toggle location tracking on or off directly from the app’s interface.
-- **Optional Network Traffic Logging:** A Python script logs the network traffic between the Life360 app and its servers to better understand the data being transmitted.
-- **VPN-Based Blocking (Optional):** For advanced users, a bash script provides VPN configuration to block Life360’s API requests at the network level.
-
----
-
-## **Technologies Used**
-
-- **Languages:**
-  - **Java (Android):** Used for the main Android app that handles GPS spoofing and location control.
-  - **Python (Optional):** Used for network traffic logging, capturing requests made to Life360.
-  - **Bash (Optional):** Used for a VPN-based blocking mechanism, which redirects or blocks specific API calls from Life360.
+## Features:
+- **Mock Location**: Automatically detects the user's current location and pauses it using mock location services when the user presses the "Pause Location" button.
+- **VPN-Based Blocking**: A bash script to block traffic to Life360 servers using OpenVPN.
+- **Network Logger**: A Python script to log network requests and responses to see what data Life360 sends and receives.
   
-- **Tools:**
-  - **Android SDK:** For building the Android app.
-  - **Wireshark/Fiddler:** For network traffic analysis (optional).
-  - **Frida/APKTool (Optional):** For reverse engineering and analyzing Life360’s internal logic (not implemented directly in this project but useful for future improvements).
-  - **OpenVPN/Shadowsocks (Optional):** For implementing a VPN to block network communication with Life360 servers.
+---
+
+## Code Structure
+
+```
+AntiLife360/
+│
+├── app/
+│   ├── src/
+│   │   └── main/
+│   │       ├── AndroidManifest.xml            # Android permissions for location and mock location
+│   │       ├── java/com/example/antitrackingapp/
+│   │       │   ├── MainActivity.kt            # Main Android Activity (auto-detects location & sets mock location)
+│   │       └── res/
+│   │           └── layout/
+│   │               └── activity_main.xml      # UI layout with the "Pause Location" button
+│   └── build.gradle                           # Build configuration for Android dependencies
+│
+├── scripts/
+│   ├── NetworkLogger.py                       # Python script to log network requests and responses
+│   └── vpn_block.sh                           # Bash script to block Life360 servers using VPN
+│
+├── .gitignore                                 # Git ignore file to exclude unnecessary files from version control
+└── README.md                                  # Project README with setup, description, and instructions
+```
 
 ---
 
-## **Installation**
+## Requirements:
+- **Android Device**: Developer Mode enabled, with mock location support.
+- **Mock Location App**: The app uses a mock location to pause the user’s location.
+- **Android Studio**: To build and run the Android app.
+- **Python 3**: For the network logger script.
+- **OpenVPN**: For the VPN-based blocking feature (optional).
 
-### **1. Prerequisites**
+---
 
-- **Android Studio:** Install Android Studio to build and run the Android app.
-- **Python 3.x (Optional):** Required for network traffic logging.
-- **OpenVPN or Shadowsocks (Optional):** For the VPN-based traffic blocking option.
+## Setup Instructions:
 
-### **2. Setting Up the Android App**
+### 1. Cloning the Project
+Clone this repository to your desired directory:
 
-1. **Clone the repository** to your local machine:
-   ```bash
-   git clone https://github.com/your-repo/antitracking-life360.git
-   cd antitracking-life360
-   ```
+```bash
+git clone https://github.com/miles-akio/CECS378-AntiLife360.git /path/to/your/directory
+```
 
-2. **Open the project in Android Studio**:
-   - Open Android Studio and select "Open an Existing Project."
-   - Navigate to the cloned folder and select it.
+### 2. Building and Running the Android App
+- Open **Android Studio**.
+- Load the project from `/AntiLife360/app`.
+- Ensure your Android device has **Developer Mode** enabled and allows **Mock Location** apps.
+- Run the app on your Android device. It will detect your current location automatically and allow you to pause it by pressing the **Pause Location** button.
 
-3. **Run the app on an Android device**:
-   - Ensure Developer Options are enabled on your Android device and USB Debugging is turned on.
-   - Build and run the app on the connected device.
-
-### **3. Running the Network Logging Script (Optional)**
-
-1. **Install the required Python packages**:
+### 3. Running the Network Logger (Optional)
+The `NetworkLogger.py` script logs all network traffic to observe the requests Life360 makes. To run it:
+   
+1. Install the required Python package:
    ```bash
    pip install requests
    ```
 
-2. **Run the Python script**:
+2. Run the Python script:
    ```bash
-   python3 NetworkLogger.py
+   python3 scripts/NetworkLogger.py
    ```
 
-### **4. Configuring VPN-Based Blocking (Optional)**
+### 4. Configuring VPN-Based Blocking (Optional)
+The `vpn_block.sh` script blocks traffic to Life360 servers using OpenVPN.
 
-1. **Install OpenVPN** (or any VPN of your choice):
+1. Install OpenVPN:
    ```bash
-   sudo apt-get install openvpn
+   brew install openvpn
    ```
 
-2. **Run the Bash script** to block traffic to Life360 servers:
+2. Run the VPN blocking script:
    ```bash
-   chmod +x vpn_block.sh
-   ./vpn_block.sh
+   chmod +x scripts/vpn_block.sh
+   ./scripts/vpn_block.sh
    ```
 
----
-
-## **Usage**
-
-1. **Launch the Android App** on your phone and click the "Block Tracking" button to start spoofing your GPS location.
-   - When GPS spoofing is active, Life360 will receive fake coordinates, effectively preventing accurate tracking.
-
-2. **Monitor Life360 Network Traffic** by running the Python script, which will log the network requests made by Life360 for analysis.
-
-3. **Set up VPN-based blocking** using the provided Bash script to block API calls to Life360’s servers.
+   This script will block traffic to Life360 servers. Ensure that your VPN is correctly configured.
 
 ---
 
-## **Project Structure**
+## Mock Location Feature Details
 
-```
-antitracking-life360/
-│
-├── app/
-│   └── src/
-│       └── main/
-│           ├── java/
-│           │   └── com/example/antitrackingapp/
-│           │       └── MainActivity.java      # Main Android Activity for GPS Spoofing
-│           └── res/
-│               └── layout/
-│                   └── activity_main.xml      # UI Layout for the app
-│
-├── NetworkLogger.py                           # Python script for network traffic logging
-└── vpn_block.sh                               # Bash script to block Life360 traffic using a VPN
-```
+The app automatically detects the user's current location when it is opened. By pressing the **Pause Location** button, the app sets the current location as a mock location, pausing the Life360 tracking. This function works while the Android **Developer Mode** is enabled and mock location is allowed.
 
 ---
 
-## **Explanation of Key Components**
+## VPN Blocking Feature Details (Optional)
 
-### **1. `MainActivity.java`**
-The core logic for the app is implemented here. The app uses Android’s `LocationManager` to set up a mock location provider. When the "Block Tracking" button is clicked, the app injects fake GPS coordinates (latitude/longitude) into the system, and these coordinates are picked up by apps like Life360, effectively preventing them from knowing your real location.
+The VPN-based blocking uses OpenVPN to block traffic to Life360 servers. It will prevent the app from sending or receiving any network traffic, effectively blocking tracking capabilities.
 
-### **2. `activity_main.xml`**
-The simple UI for the app, contains a button that users click to toggle between "Block Tracking" and "Unblock Tracking."
-
-### **3. `NetworkLogger.py`**
-A Python script that uses the `requests` library to capture HTTP requests and responses. It logs network traffic that could provide insight into what data Life360 sends or receives, offering another layer of analysis.
-
-### **4. `vpn_block.sh`**
-A Bash script that configures OpenVPN or other VPN services to block specific API calls made to Life360 servers. This is an optional feature for users who want to ensure no traffic is sent to Life360 at the network level.
+To adapt this for **macOS**, use `pfctl` instead of `iptables`. The VPN script can be modified for macOS or left as-is for Linux.
 
 ---
 
-## **Limitations and Future Improvements**
+## Network Logger Feature (Optional)
 
-### **1. Accuracy of Spoofed Locations**
-While the app fakes the GPS location, some apps may cross-check the coordinates with network or WiFi-based location services. Additional steps may be required to handle these scenarios.
-
-### **2. SSL Pinning Bypass**
-If Life360 uses SSL pinning to encrypt its traffic, you might need to use a tool like **Frida** to bypass it and inspect network traffic properly.
-
-### **3. Multi-Platform Support**
-Currently, the project focuses on Android devices. Future updates could extend the functionality to iOS with similar location spoofing techniques.
-
-### **4. Reverse Engineering Life360**
-Further reverse engineering can reveal more about how Life360 collects data. Tools like **Frida** or **APKTool** can decompile the app and provide insights into additional tracking mechanisms beyond GPS.
+The Python script `NetworkLogger.py` captures and logs requests to Life360 servers, allowing you to observe the type of data being sent and received. This will help you better understand how Life360 gathers and transmits location and other user data.
 
 ---
 
-## **Conclusion**
+## Future Improvements
+- **Advanced Mock Location**: Add features for more advanced control over mock location settings, such as setting custom coordinates.
+- **Stealth Mode**: Implementing a more stealthy approach for mock location detection, improving the bypassing capabilities.
+- **Cross-platform Support**: Adding support for iOS devices for similar functionality.
 
-This project offers a privacy-focused solution for users who wish to block or fake their location when using Life360. By using GPS spoofing and optional network blocking, users can protect their real location data from being tracked by third-party apps.
+---
+
+This project provides a robust solution for users looking to prevent location tracking while also monitoring Life360's data activities.
