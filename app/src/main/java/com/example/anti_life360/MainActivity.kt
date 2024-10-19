@@ -68,7 +68,7 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
             color = Color.Black,
             fontSize = 20.sp,
             textAlign = TextAlign.Center,
-            fontWeight = FontWeight.Normal // You can adjust this as needed
+            fontWeight = FontWeight.Normal
         )
     }
 }
