@@ -2,9 +2,9 @@ Here is a fully updated README, including the latest version of the code structu
 
 ---
 
-# AntiLife360 App
+# TraceFree Application
 
-**AntiLife360** is an Android app designed to block Life360 from tracking user location and monitor the data collected by the Life360 app. This app allows users to set mock locations to avoid real-time tracking and can block Life360 traffic via VPN. 
+**TraceFree** is an Android app designed to block Life360 from tracking user location and monitor the data collected by the Life360 app. This app allows users to set mock locations to avoid real-time tracking and can block Life360 traffic via VPN. 
 
 Additionally, the project provides a Python script for logging network requests to analyze data traffic and a bash script to block Life360 servers using VPN.
 
