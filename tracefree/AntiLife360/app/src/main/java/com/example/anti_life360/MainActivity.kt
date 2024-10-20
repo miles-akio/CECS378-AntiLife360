@@ -69,7 +69,6 @@ class MainActivity : ComponentActivity() {
         // Check and request permissions
         when {
             ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED -> {
-                // Permission already granted, start location updates
                 startLocationUpdates()
             }
             else -> {
