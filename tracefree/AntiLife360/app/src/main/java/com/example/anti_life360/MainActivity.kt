@@ -72,7 +72,7 @@ class MainActivity : ComponentActivity() {
                 startLocationUpdates()
             }
             else -> {
-                // Request location permissions 
+                // Request location permissions
                 requestPermissionLauncher.launch(
                     arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION)
                 )
