@@ -19,7 +19,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
 import com.example.anti_life360.ui.theme.AntiLife360Theme
-import android.location.Location
 import android.util.Log
 import com.google.android.gms.location.*
 import androidx.core.content.ContextCompat
