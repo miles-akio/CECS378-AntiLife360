@@ -17,6 +17,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
 import com.example.anti_life360.ui.theme.AntiLife360Theme
+import androidx.compose.ui.platform.LocalConfiguration
+
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -38,7 +40,7 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun PauseButton(name: String, modifier: Modifier = Modifier) {
     var isClicked by remember { mutableStateOf(false) }
-
+    val screenWidth = LocalConfiguration.current.screenWidthDp.dp
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -68,7 +70,8 @@ fun PauseButton(name: String, modifier: Modifier = Modifier) {
             color = Color.Black,
             fontSize = 20.sp,
             textAlign = TextAlign.Center,
-            fontWeight = FontWeight.Normal
+            fontWeight = FontWeight.Normal,
+            modifier = Modifier.widthIn(max = screenWidth * 0.7f)
         )
     }
 }
