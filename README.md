@@ -2,7 +2,7 @@ Here is a fully updated README, including the latest version of the code structu
 
 ---
 
-# TraceFree App
+# TraceFree Application
 
 **TraceFree** is an Android app designed to block Life360 from tracking user location and monitor the data collected by the Life360 app. This app allows users to set mock locations to avoid real-time tracking and can block Life360 traffic via VPN. 
 
@@ -18,7 +18,7 @@ Additionally, the project provides a Python script for logging network requests 
 ## Code Structure
 
 ```
-TraceFree/
+AntiLife360/
 │
 ├── app/
 │   ├── src/
@@ -56,12 +56,12 @@ TraceFree/
 Clone this repository to your desired directory:
 
 ```bash
-git clone https://github.com/miles-akio/CECS378-TraceFree.git /path/to/your/directory
+git clone https://github.com/miles-akio/CECS378-AntiLife360.git /path/to/your/directory
 ```
 
 ### 2. Building and Running the Android App
 - Open **Android Studio**.
-- Load the project from `/TraceFree/app`.
+- Load the project from `/AntiLife360/app`.
 - Ensure your Android device has **Developer Mode** enabled and allows **Mock Location** apps.
 - Run the app on your Android device. It will detect your current location automatically and allow you to pause it by pressing the **Pause Location** button.
 
