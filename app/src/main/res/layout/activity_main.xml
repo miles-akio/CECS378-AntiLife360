@@ -1,0 +1,95 @@
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/light_gray"
+    android:padding="16dp">
+
+    <!-- App Title -->
+    <TextView
+        android:id="@+id/title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="TraceFree"
+        android:textSize="32sp"
+        android:textColor="@color/purple_500"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="20dp" />
+
+    <!-- Current Location Card -->
+
+    <!-- Pause Location Button -->
+    <CardView
+        app:cardBackgroundColor="@color/white"
+        app:cardElevation="6dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/title"
+        android:layout_marginTop="411dp"
+        android:padding="16dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/current_location"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Current Location: Unknown"
+                android:textColor="@color/black"
+                android:textSize="20sp" />
+
+            <TextView
+                android:id="@+id/location_status"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="5dp"
+                android:text="Status: Not Paused"
+                android:textColor="@color/teal_700"
+                android:textSize="16sp" />
+        </LinearLayout>
+    </CardView>
+
+    <!-- Footer with additional options -->
+    <Button
+        android:id="@+id/pause_location_button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/current_location"
+        android:layout_marginTop="-175dp"
+        android:layout_marginBottom="20dp"
+        android:backgroundTint="@color/teal_200"
+        android:padding="16dp"
+        android:text="Pause Location"
+        android:textColor="@color/white"
+        android:textSize="18sp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:layout_marginBottom="20dp">
+
+        <Button
+            android:id="@+id/settings_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Settings"
+            android:backgroundTint="@color/purple_500"
+            android:textColor="@color/white"
+            android:layout_marginEnd="10dp" />
+
+        <Button
+            android:id="@+id/help_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Help"
+            android:backgroundTint="@color/purple_500"
+            android:textColor="@color/white" />
+    </LinearLayout>
+</RelativeLayout>
