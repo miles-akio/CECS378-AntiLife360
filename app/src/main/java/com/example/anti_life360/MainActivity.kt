@@ -1,30 +1,58 @@
 package com.example.anti_life360
 
 import android.Manifest
+import android.content.pm.PackageManager
+import android.location.Location
+import android.location.LocationManager
+import android.location.LocationProvider
+import android.location.provider.ProviderProperties
+import android.os.Build
 import android.os.Bundle
+import android.os.SystemClock
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresApi
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.anti_life360.ui.theme.AntiLife360Theme
-import android.util.Log
-import com.google.android.gms.location.*
-import androidx.core.content.ContextCompat
-import android.content.pm.PackageManager
 import androidx.core.app.ActivityCompat
-import androidx.compose.ui.platform.LocalConfiguration
+import androidx.core.content.ContextCompat
+import com.example.anti_life360.ui.theme.AntiLife360Theme
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationCallback
+import com.google.android.gms.location.LocationRequest
+import com.google.android.gms.location.LocationResult
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.Priority
+
 
 class MainActivity : ComponentActivity() {
 
@@ -32,6 +60,7 @@ class MainActivity : ComponentActivity() {
     private lateinit var locationRequest: LocationRequest
     private lateinit var locationCallback: LocationCallback
 
+    @RequiresApi(Build.VERSION_CODES.S)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -104,9 +133,57 @@ class MainActivity : ComponentActivity() {
     }
 
     // Function to stop location updates
+    @RequiresApi(Build.VERSION_CODES.S)
     private fun stopLocationUpdates() {
+        setMockLocation(33.8843, -118.3303, 500.0F)
         fusedLocationClient.removeLocationUpdates(locationCallback)
         Log.d("LocationStatus", "Location updates stopped.")
+    }
+
+    @RequiresApi(Build.VERSION_CODES.S)
+    private fun setMockLocation(lat: Double, long: Double, acc: Float) {
+        val locationManager = applicationContext.getSystemService(LOCATION_SERVICE) as LocationManager
+        locationManager.addTestProvider(LocationManager.GPS_PROVIDER,
+            true,
+            false,
+            false,
+            false,
+            true,
+            true,
+            true,
+            ProviderProperties.POWER_USAGE_LOW,
+            ProviderProperties.ACCURACY_FINE)
+
+        val mockLocation = Location(LocationManager.GPS_PROVIDER)
+        if (ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return
+        }
+
+        mockLocation.latitude = lat
+        mockLocation.longitude = long
+
+        mockLocation.accuracy = acc
+        mockLocation.altitude = 0.0
+        mockLocation.accuracy = 500.0F
+        mockLocation.time = System.currentTimeMillis()
+        mockLocation.elapsedRealtimeNanos = SystemClock.elapsedRealtimeNanos()
+        locationManager.setTestProviderEnabled(LocationManager.GPS_PROVIDER, true)
+        locationManager.setTestProviderStatus(LocationManager.GPS_PROVIDER, LocationProvider.AVAILABLE, null, System.currentTimeMillis())
+        locationManager.setTestProviderLocation(LocationManager.GPS_PROVIDER, mockLocation)
     }
 }
 
@@ -114,7 +191,7 @@ class MainActivity : ComponentActivity() {
 fun PauseButton(
     modifier: Modifier = Modifier,
     startLocationUpdates: () -> Unit,
-    stopLocationUpdates: () -> Unit
+    stopLocationUpdates: () -> Unit,
 ) {
     var isClicked by remember { mutableStateOf(false) }
     val screenWidth = LocalConfiguration.current.screenWidthDp.dp
