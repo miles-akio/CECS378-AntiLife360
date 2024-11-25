@@ -122,7 +122,11 @@ class MainActivity : ComponentActivity() {
     }
 
     // Function to start location updates
+    @RequiresApi(Build.VERSION_CODES.S)
     private fun startLocationUpdates() {
+        val locationManager = applicationContext.getSystemService(LOCATION_SERVICE) as LocationManager
+        if(locationManager.getProviderProperties(LocationManager.GPS_PROVIDER) != null)
+            locationManager.removeTestProvider(LocationManager.GPS_PROVIDER)
         if (ActivityCompat.checkSelfPermission(
                 this,
                 Manifest.permission.ACCESS_FINE_LOCATION
@@ -135,7 +139,7 @@ class MainActivity : ComponentActivity() {
     // Function to stop location updates
     @RequiresApi(Build.VERSION_CODES.S)
     private fun stopLocationUpdates() {
-        setMockLocation(33.8843, -118.3303, 500.0F)
+        setMockLocation(33.7839,-118.1141,0.0F)
         fusedLocationClient.removeLocationUpdates(locationCallback)
         Log.d("LocationStatus", "Location updates stopped.")
     }
@@ -175,7 +179,6 @@ class MainActivity : ComponentActivity() {
 
         mockLocation.latitude = lat
         mockLocation.longitude = long
-
         mockLocation.accuracy = acc
         mockLocation.altitude = 0.0
         mockLocation.accuracy = 500.0F
