@@ -1,7 +1,6 @@
 package com.example.anti_life360
 
 import android.Manifest
-import android.annotation.SuppressLint
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.util.Log
@@ -37,35 +36,20 @@ import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
 import kotlinx.coroutines.*
-import android.content.Context
-import android.location.Criteria
-import android.location.Location
-import android.location.LocationManager
-import android.location.LocationProvider
-import android.location.provider.ProviderProperties
-import android.os.Build
-import android.os.SystemClock
-import androidx.annotation.RequiresApi
-import androidx.core.app.ActivityCompat
-
 
 class MainActivity : ComponentActivity(), OnMapReadyCallback {
 
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var locationRequest: LocationRequest
-    private lateinit var locationManager: LocationManager
+    private lateinit var mapView: MapView
     private var googleMap: GoogleMap? = null
+    private var lastKnownLocation: LatLng? = null
     private var loggingJob: Job? = null
     private var isPaused = false
-    private var lastKnownLocation: LatLng? = null
-
-
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-
-        locationManager  = getSystemService(Context.LOCATION_SERVICE) as LocationManager
 
         // Initialize FusedLocationProviderClient
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
@@ -142,64 +126,10 @@ class MainActivity : ComponentActivity(), OnMapReadyCallback {
         }
     }
 
-    @SuppressLint("InlinedApi")
-    @RequiresApi(Build.VERSION_CODES.S)
-    private fun setMockLocation(lat: Double, long: Double) {
-        val locationManager = applicationContext.getSystemService(LOCATION_SERVICE) as LocationManager
-
-        // Check if the device supports mock locations (API 31+)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            try {
-                // Create mock location
-                val mockLocation = Location(LocationManager.GPS_PROVIDER).apply {
-                    this.latitude = lat
-                    this.longitude = long
-                    this.accuracy = 10.0F
-                    this.time = System.currentTimeMillis()
-                    this.elapsedRealtimeNanos = SystemClock.elapsedRealtimeNanos()
-                }
-
-                // Enable test provider for mock locations
-                locationManager.addTestProvider(
-                    LocationManager.GPS_PROVIDER,
-                    true, false, false, false,
-                    true, true, true,
-                    ProviderProperties.POWER_USAGE_LOW, ProviderProperties.ACCURACY_FINE
-                )
-                locationManager.setTestProviderEnabled(LocationManager.GPS_PROVIDER, true)
-                locationManager.setTestProviderLocation(LocationManager.GPS_PROVIDER, mockLocation)
-
-                // Log mock location set
-                Log.d("LocationStatus", "Mock location set to: $lat, $long")
-
-                // Update map with mock location
-                googleMap?.let { map ->
-                    map.clear()
-                    map.addMarker(MarkerOptions().position(LatLng(lat, long)).title("Mock Location"))
-                    map.moveCamera(CameraUpdateFactory.newLatLngZoom(LatLng(lat, long), 15f))
-                }
-
-            } catch (e: IllegalArgumentException) {
-                Log.e("LocationStatus", "Failed to set mock location: ${e.message}")
-            }
-        } else {
-            Log.e("LocationStatus", "Mock locations are not supported on this device (API < 31).")
-        }
-    }
-
-
-
-    @SuppressLint("NewApi")
     private fun stopLocationUpdates() {
         isPaused = true
         fusedLocationClient.removeLocationUpdates(object : LocationCallback() {})
         Log.d("LocationStatus", "Location updates paused.")
-
-        // Set a mock location at the last known coordinates
-        lastKnownLocation?.let {
-            // setMockLocation(it.latitude, it.longitude)
-            setMockLocation(33.789, -118.293) // DEBUG PURPOSES
-        }
         logLastKnownLocation()
     }
 
