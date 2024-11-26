@@ -8,7 +8,10 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -16,8 +19,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -133,13 +138,15 @@ class MainActivity : ComponentActivity(), OnMapReadyCallback {
         loggingJob = CoroutineScope(Dispatchers.IO).launch {
             while (isActive && isPaused) {
                 lastKnownLocation?.let {
-                    Log.d("LocationStatus", "Last known location: ${it.latitude}, ${it.longitude}")
+                    Log.d("LocationStatus", "Updated location: ${it.latitude}, ${it.longitude}")
                 }
                 delay(5000) // Log every 5 seconds
             }
         }
     }
 }
+
+
 
 @Composable
 fun PauseButtonWithMap(
@@ -148,9 +155,10 @@ fun PauseButtonWithMap(
     stopLocationUpdates: () -> Unit
 ) {
     var isClicked by remember { mutableStateOf(false) }
+    val screenWidth = LocalConfiguration.current.screenWidthDp.dp
 
     Column(
-        modifier = modifier
+        modifier = Modifier
             .fillMaxSize()
             .padding(16.dp),
         verticalArrangement = Arrangement.Center,
@@ -158,13 +166,14 @@ fun PauseButtonWithMap(
     ) {
         Text(
             text = "Trace Free",
+            color = Color.Black,
             fontSize = 32.sp,
             fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(bottom = 25.dp),
-            textAlign = TextAlign.Center
+            modifier = Modifier.padding(top = 0.dp, bottom = 25.dp)
+
         )
 
-        // Google Map
+        // Google Maps
         AndroidView(
             factory = { context ->
                 MapView(context).apply {
@@ -178,7 +187,7 @@ fun PauseButtonWithMap(
                 .fillMaxWidth()
                 .aspectRatio(9 / 10f)
                 .padding(bottom = 16.dp)
-                .clip(RoundedCornerShape(16.dp))
+                .clip(androidx.compose.foundation.shape.RoundedCornerShape(16.dp))
         )
 
         Spacer(modifier = Modifier.height(20.dp))
@@ -189,33 +198,47 @@ fun PauseButtonWithMap(
                 isClicked = !isClicked
                 if (isClicked) {
                     stopLocationUpdates()
-                    Log.d("LocationStatus", "Location updates paused.")
+                    Log.d("LocationStatus", "Location paused.")
                 } else {
                     startLocationUpdates()
                     Log.d("LocationStatus", "Location tracking resumed.")
                 }
             },
             colors = ButtonDefaults.buttonColors(
-                containerColor = if (isClicked) Color.Green else Color.Red
+                containerColor = Color(if (isClicked) 0xFF008421 else 0xFFcf142b)
             ),
+            shape = CircleShape,
             modifier = Modifier.size(115.dp)
+                .aspectRatio(1 / 1f)
         ) {
+            val text = if (isClicked) "RESUME" else "PAUSE"
+
+            // Dynamically adjust font size based on text length
+            val fontSize = animateFloatAsState(
+                targetValue = if (text.length > 5) 15f else 17f,
+                animationSpec = tween(durationMillis = 300), label = ""
+            )
+
             Text(
-                text = if (isClicked) "RESUME" else "PAUSE",
+                text = text,
                 color = Color.White,
-                fontSize = 17.sp,
-                fontWeight = FontWeight.Bold
+                fontSize = fontSize.value.sp,
+                fontWeight = FontWeight.Bold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
         }
 
         Spacer(modifier = Modifier.height(16.dp))
 
+        // Display the appropriate message below the button
         Text(
-            text = if (isClicked) "Your location is paused." else "Your location is currently \n being tracked.",
+            text = if (isClicked) "Your location is paused." else "Your location is currently being tracked.",
             color = Color.Black,
             fontSize = 20.sp,
             textAlign = TextAlign.Center,
             fontWeight = FontWeight.Normal,
+            modifier = Modifier.widthIn(max = screenWidth * 0.7f)
         )
     }
 }
