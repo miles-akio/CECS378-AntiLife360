@@ -2,106 +2,57 @@ package com.example.anti_life360
 
 import android.Manifest
 import android.content.pm.PackageManager
-import android.location.Location
-import android.location.LocationManager
-import android.location.LocationProvider
-import android.location.provider.ProviderProperties
-import android.os.Build
 import android.os.Bundle
-import android.os.SystemClock
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.annotation.RequiresApi
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.app.ActivityCompat
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import com.example.anti_life360.ui.theme.AntiLife360Theme
-import com.google.android.gms.location.FusedLocationProviderClient
-import com.google.android.gms.location.LocationCallback
-import com.google.android.gms.location.LocationRequest
-import com.google.android.gms.location.LocationResult
-import com.google.android.gms.location.LocationServices
-import com.google.android.gms.location.Priority
-import androidx.compose.ui.viewinterop.AndroidView
+import com.google.android.gms.location.*
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.MapView
+import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
-import java.util.concurrent.TimeUnit
+import kotlinx.coroutines.*
 
-
-class MainActivity : ComponentActivity() {
+class MainActivity : ComponentActivity(), OnMapReadyCallback {
 
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var locationRequest: LocationRequest
-    private lateinit var locationCallback: LocationCallback
+    private lateinit var mapView: MapView
     private var googleMap: GoogleMap? = null
+    private var lastKnownLocation: LatLng? = null
+    private var loggingJob: Job? = null
+    private var isPaused = false
 
-    @RequiresApi(Build.VERSION_CODES.S)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        // Initialize the FusedLocationProviderClient
+        // Initialize FusedLocationProviderClient
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
-        // Create a location request with intervals
+        // Create location request
         locationRequest = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 5000).build()
 
-        // Create a location callback to listen for updates
-        locationCallback = object : LocationCallback() {
-            override fun onLocationResult(locationResult: LocationResult) {
-                for (location in locationResult.locations) {
-                    Log.d("LocationStatus", "Updated location: ${location.latitude}, ${location.longitude}")
-                    val userLocation = LatLng(location.latitude, location.longitude)
-
-                    googleMap?.let { map ->
-                        map.addMarker(MarkerOptions().position(userLocation).title("You are here"))
-                        map.moveCamera(CameraUpdateFactory.newLatLng(userLocation))
-                    }
-                }
-            }
-        }
-
-
-        // Register for permission request result handling
+        // Register for permission request
         val requestPermissionLauncher = registerForActivityResult(
             ActivityResultContracts.RequestMultiplePermissions()
         ) { permissions ->
@@ -109,7 +60,6 @@ class MainActivity : ComponentActivity() {
             val coarseLocationPermissionGranted = permissions[Manifest.permission.ACCESS_COARSE_LOCATION] ?: false
 
             if (locationPermissionGranted || coarseLocationPermissionGranted) {
-                // If permissions granted, start location updates
                 startLocationUpdates()
             } else {
                 Log.d("LocationStatus", "Location permission denied.")
@@ -122,7 +72,6 @@ class MainActivity : ComponentActivity() {
                 startLocationUpdates()
             }
             else -> {
-                // Request location permissions
                 requestPermissionLauncher.launch(
                     arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION)
                 )
@@ -131,97 +80,62 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             AntiLife360Theme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding: PaddingValues ->
-                    PauseButtonWithMap(
-                        modifier = Modifier.padding(innerPadding),
-                        startLocationUpdates = ::startLocationUpdates,
-                        stopLocationUpdates = ::stopLocationUpdates
-                    )
-                }
+                PauseButtonWithMap(
+                    startLocationUpdates = ::startLocationUpdates,
+                    stopLocationUpdates = ::stopLocationUpdates
+                )
             }
         }
     }
 
-    // Function to start location updates
-    @RequiresApi(Build.VERSION_CODES.S)
+    override fun onMapReady(map: GoogleMap) {
+        googleMap = map
+        googleMap?.uiSettings?.isZoomControlsEnabled = true
+        googleMap?.uiSettings?.isMyLocationButtonEnabled = true
+    }
+
     private fun startLocationUpdates() {
-        val locationManager = applicationContext.getSystemService(LOCATION_SERVICE) as LocationManager
-        if(locationManager.getProviderProperties(LocationManager.GPS_PROVIDER) != null)
-            locationManager.removeTestProvider(LocationManager.GPS_PROVIDER)
-        if (ActivityCompat.checkSelfPermission(
+        if (ContextCompat.checkSelfPermission(
                 this,
                 Manifest.permission.ACCESS_FINE_LOCATION
             ) == PackageManager.PERMISSION_GRANTED
         ) {
-            fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, null)
-        }
-    }
+            isPaused = false
+            loggingJob?.cancel() // Stop any previous logging
+            fusedLocationClient.requestLocationUpdates(locationRequest, object : LocationCallback() {
+                override fun onLocationResult(locationResult: LocationResult) {
+                    if (!isPaused) {
+                        for (location in locationResult.locations) {
+                            lastKnownLocation = LatLng(location.latitude, location.longitude)
+                            Log.d("LocationStatus", "Updated location: ${location.latitude}, ${location.longitude}")
 
-    // Function to stop location updates
-    @RequiresApi(Build.VERSION_CODES.S)
-    private fun stopLocationUpdates() {
-        setMockLocation(33.7839,-118.1141,0.0F)
-        //pauseAtCurrentLocation()
-        fusedLocationClient.removeLocationUpdates(locationCallback)
-        Log.d("LocationStatus", "Location updates stopped.")
-    }
-
-    @RequiresApi(Build.VERSION_CODES.S)
-    private fun setMockLocation(lat: Double, long: Double, acc: Float) {
-        val locationManager = applicationContext.getSystemService(LOCATION_SERVICE) as LocationManager
-        locationManager.addTestProvider(LocationManager.GPS_PROVIDER,
-            true,
-            false,
-            false,
-            false,
-            true,
-            true,
-            true,
-            ProviderProperties.POWER_USAGE_LOW,
-            ProviderProperties.ACCURACY_FINE)
-
-        val mockLocation = Location(LocationManager.GPS_PROVIDER)
-        if (ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_COARSE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-            return
-        }
-
-        mockLocation.latitude = lat
-        mockLocation.longitude = long
-        mockLocation.accuracy = acc
-        mockLocation.altitude = 0.0
-        mockLocation.accuracy = 500.0F
-        mockLocation.time = System.currentTimeMillis()
-        mockLocation.elapsedRealtimeNanos = SystemClock.elapsedRealtimeNanos()
-        locationManager.setTestProviderEnabled(LocationManager.GPS_PROVIDER, true)
-        locationManager.setTestProviderStatus(LocationManager.GPS_PROVIDER, LocationProvider.AVAILABLE, null, System.currentTimeMillis())
-        locationManager.setTestProviderLocation(LocationManager.GPS_PROVIDER, mockLocation)
-    }
-
-    @RequiresApi(Build.VERSION_CODES.S)
-    private fun pauseAtCurrentLocation() {
-        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
-
-        locationRequest = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 10000).build()
-
-        locationCallback = object : LocationCallback() {
-            override fun onLocationResult(locationResult: LocationResult) {
-                for (location in locationResult.locations) {
-                    setMockLocation(location.latitude, location.longitude, 0.0F)
+                            googleMap?.let { map ->
+                                map.clear() // Clear previous markers
+                                map.addMarker(MarkerOptions().position(lastKnownLocation!!).title("You are here"))
+                                map.moveCamera(CameraUpdateFactory.newLatLngZoom(lastKnownLocation!!, 15f))
+                            }
+                        }
+                    }
                 }
+            }, null)
+        }
+    }
+
+    private fun stopLocationUpdates() {
+        isPaused = true
+        fusedLocationClient.removeLocationUpdates(object : LocationCallback() {})
+        Log.d("LocationStatus", "Location updates paused.")
+        logLastKnownLocation()
+    }
+
+    private fun logLastKnownLocation() {
+        loggingJob?.cancel() // Stop any previous logging
+        loggingJob = CoroutineScope(Dispatchers.IO).launch {
+            while (isActive && isPaused) {
+                lastKnownLocation?.let {
+                    Log.d("LocationStatus", "Last known location: ${it.latitude}, ${it.longitude}")
+                }
+                delay(5000) // Log every 5 seconds
             }
         }
     }
@@ -234,10 +148,9 @@ fun PauseButtonWithMap(
     stopLocationUpdates: () -> Unit
 ) {
     var isClicked by remember { mutableStateOf(false) }
-    val screenWidth = LocalConfiguration.current.screenWidthDp.dp
 
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .padding(16.dp),
         verticalArrangement = Arrangement.Center,
@@ -245,25 +158,19 @@ fun PauseButtonWithMap(
     ) {
         Text(
             text = "Trace Free",
-            color = Color.Black,
             fontSize = 32.sp,
             fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(top = 0.dp, bottom = 25.dp)
+            modifier = Modifier.padding(bottom = 25.dp),
+            textAlign = TextAlign.Center
         )
 
-        // Google Maps
+        // Google Map
         AndroidView(
             factory = { context ->
                 MapView(context).apply {
                     onCreate(null)
-                    getMapAsync { googleMap ->
-                        googleMap.uiSettings.isZoomControlsEnabled = true
-                        googleMap.uiSettings.isMyLocationButtonEnabled = false
-                        // googleMap.isMyLocationEnabled = true
-
-                        val userLocation = LatLng(33.7839, -118.1141) // Mocked example location
-                        googleMap.addMarker(MarkerOptions().position(userLocation).title("You are here"))
-                        googleMap.moveCamera(CameraUpdateFactory.newLatLng(userLocation))
+                    getMapAsync { map ->
+                        (context as? OnMapReadyCallback)?.onMapReady(map)
                     }
                 }
             },
@@ -271,7 +178,7 @@ fun PauseButtonWithMap(
                 .fillMaxWidth()
                 .aspectRatio(9 / 10f)
                 .padding(bottom = 16.dp)
-                .clip(androidx.compose.foundation.shape.RoundedCornerShape(16.dp))
+                .clip(RoundedCornerShape(16.dp))
         )
 
         Spacer(modifier = Modifier.height(20.dp))
@@ -282,59 +189,33 @@ fun PauseButtonWithMap(
                 isClicked = !isClicked
                 if (isClicked) {
                     stopLocationUpdates()
-                    Log.d("LocationStatus", "Location paused.")
+                    Log.d("LocationStatus", "Location updates paused.")
                 } else {
                     startLocationUpdates()
                     Log.d("LocationStatus", "Location tracking resumed.")
                 }
             },
             colors = ButtonDefaults.buttonColors(
-                containerColor = Color(if (isClicked) 0xFF008421 else 0xFFcf142b)
+                containerColor = if (isClicked) Color.Green else Color.Red
             ),
-            shape = CircleShape,
             modifier = Modifier.size(115.dp)
-                .aspectRatio(1 / 1f)
         ) {
-            val text = if (isClicked) "RESUME" else "PAUSE"
-
-            // Dynamically adjust font size based on text length
-            val fontSize = animateFloatAsState(
-                targetValue = if (text.length > 5) 15f else 17f,
-                animationSpec = tween(durationMillis = 300), label = ""
-            )
-
             Text(
-                text = text,
+                text = if (isClicked) "RESUME" else "PAUSE",
                 color = Color.White,
-                fontSize = fontSize.value.sp,
-                fontWeight = FontWeight.Bold,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+                fontSize = 17.sp,
+                fontWeight = FontWeight.Bold
             )
         }
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Display the appropriate message below the button
         Text(
-            text = if (isClicked) "Your location is paused." else "Your location is currently being tracked.",
+            text = if (isClicked) "Your location is paused." else "Your location is currently \n being tracked.",
             color = Color.Black,
             fontSize = 20.sp,
             textAlign = TextAlign.Center,
             fontWeight = FontWeight.Normal,
-            modifier = Modifier.widthIn(max = screenWidth * 0.7f)
-        )
-    }
-}
-
-
-@Preview(showBackground = true)
-@Composable
-fun PauseButtonPreview() {
-    AntiLife360Theme {
-        PauseButtonWithMap(
-            startLocationUpdates = {},
-            stopLocationUpdates = {}
         )
     }
 }
