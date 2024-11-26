@@ -159,11 +159,6 @@ class MainActivity : ComponentActivity(), OnMapReadyCallback {
                     this.elapsedRealtimeNanos = SystemClock.elapsedRealtimeNanos()
                 }
 
-                // Remove all test providers
-                if (locationManager.allProviders.contains(LocationManager.GPS_PROVIDER)) {
-                    locationManager.removeTestProvider(LocationManager.GPS_PROVIDER)
-                }
-
                 // Enable test provider for mock locations
                 locationManager.addTestProvider(
                     LocationManager.GPS_PROVIDER,
@@ -194,25 +189,17 @@ class MainActivity : ComponentActivity(), OnMapReadyCallback {
 
 
 
-    @SuppressLint("NewApi", "MissingPermission")
+    @SuppressLint("NewApi")
     private fun stopLocationUpdates() {
         isPaused = true
-        Log.d("LocationStatus", "Location updates paused.")
         fusedLocationClient.removeLocationUpdates(object : LocationCallback() {})
+        Log.d("LocationStatus", "Location updates paused.")
 
         // Set a mock location at the last known coordinates
         lastKnownLocation?.let {
             // setMockLocation(it.latitude, it.longitude)
             setMockLocation(33.789, -118.293) // DEBUG PURPOSES
         }
-
-        // Introduce a delay to ensure mock location is set before resuming updates
-        CoroutineScope(Dispatchers.Main).launch {
-            delay(3000) // 1 second delay
-            fusedLocationClient.requestLocationUpdates(locationRequest, object : LocationCallback() {}, null)
-            logLastKnownLocation()
-        }
-
         logLastKnownLocation()
     }
 
@@ -223,7 +210,7 @@ class MainActivity : ComponentActivity(), OnMapReadyCallback {
                 lastKnownLocation?.let {
                     Log.d("LocationStatus", "Updated location: ${it.latitude}, ${it.longitude}")
                 }
-                delay(2500) // Log every 2.5 seconds
+                delay(5000) // Log every 5 seconds
             }
         }
     }
