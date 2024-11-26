@@ -52,6 +52,7 @@ import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
+import java.util.concurrent.TimeUnit
 
 
 class MainActivity : ComponentActivity() {
@@ -140,6 +141,7 @@ class MainActivity : ComponentActivity() {
     @RequiresApi(Build.VERSION_CODES.S)
     private fun stopLocationUpdates() {
         setMockLocation(33.7839,-118.1141,0.0F)
+        //pauseAtCurrentLocation()
         fusedLocationClient.removeLocationUpdates(locationCallback)
         Log.d("LocationStatus", "Location updates stopped.")
     }
@@ -187,6 +189,21 @@ class MainActivity : ComponentActivity() {
         locationManager.setTestProviderEnabled(LocationManager.GPS_PROVIDER, true)
         locationManager.setTestProviderStatus(LocationManager.GPS_PROVIDER, LocationProvider.AVAILABLE, null, System.currentTimeMillis())
         locationManager.setTestProviderLocation(LocationManager.GPS_PROVIDER, mockLocation)
+    }
+
+    @RequiresApi(Build.VERSION_CODES.S)
+    private fun pauseAtCurrentLocation() {
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+
+        locationRequest = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 10000).build()
+
+        locationCallback = object : LocationCallback() {
+            override fun onLocationResult(locationResult: LocationResult) {
+                for (location in locationResult.locations) {
+                    setMockLocation(location.latitude, location.longitude, 0.0F)
+                }
+            }
+        }
     }
 }
 
