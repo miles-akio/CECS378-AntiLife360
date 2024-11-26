@@ -13,6 +13,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -37,26 +38,18 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
 import kotlinx.coroutines.*
 import android.content.Context
+import android.location.Criteria
 import android.location.Location
 import android.location.LocationManager
+import android.location.LocationProvider
 import android.location.provider.ProviderProperties
 import android.os.Build
-import android.os.Looper
 import android.os.SystemClock
 import androidx.annotation.RequiresApi
-import android.location.LocationListener
+import androidx.core.app.ActivityCompat
 
 
 class MainActivity : ComponentActivity(), OnMapReadyCallback {
-    private val locationListener = object : LocationListener {
-        override fun onLocationChanged(location: Location) {
-            Log.d("LocationListener", "Real location update received: ${location.latitude}, ${location.longitude}")
-        }
-
-        override fun onStatusChanged(provider: String?, status: Int, extras: Bundle?) {}
-        override fun onProviderEnabled(provider: String) {}
-        override fun onProviderDisabled(provider: String) {}
-    }
 
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var locationRequest: LocationRequest
@@ -130,35 +123,26 @@ class MainActivity : ComponentActivity(), OnMapReadyCallback {
         ) {
             isPaused = false
             loggingJob?.cancel() // Stop any previous logging
+            fusedLocationClient.requestLocationUpdates(locationRequest, object : LocationCallback() {
+                override fun onLocationResult(locationResult: LocationResult) {
+                    if (!isPaused) {
+                        for (location in locationResult.locations) {
+                            lastKnownLocation = LatLng(location.latitude, location.longitude)
+                            Log.d("LocationStatus", "Updated location: ${location.latitude}, ${location.longitude}")
 
-            locationRequest = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 5000)
-                .build()
-
-            fusedLocationClient.requestLocationUpdates(
-                locationRequest,
-                object : LocationCallback() {
-                    override fun onLocationResult(locationResult: LocationResult) {
-                        if (!isPaused) {
-                            for (location in locationResult.locations) {
-                                lastKnownLocation = LatLng(location.latitude, location.longitude)
-                                Log.d("LocationStatus", "Updated location: ${location.latitude}, ${location.longitude}")
-
-                                // Update map with the new location
-                                googleMap?.let { map ->
-                                    map.clear() // Clear previous markers
-                                    map.addMarker(MarkerOptions().position(lastKnownLocation!!).title("You are here"))
-                                    map.moveCamera(CameraUpdateFactory.newLatLngZoom(lastKnownLocation!!, 15f))
-                                }
+                            googleMap?.let { map ->
+                                map.clear() // Clear previous markers
+                                map.addMarker(MarkerOptions().position(lastKnownLocation!!).title("You are here"))
+                                map.moveCamera(CameraUpdateFactory.newLatLngZoom(lastKnownLocation!!, 15f))
                             }
                         }
                     }
-                },
-                Looper.getMainLooper() // Run on the main thread
-            )
+                }
+            }, null)
         }
     }
 
-    @SuppressLint("InlinedApi", "MissingPermission")
+    @SuppressLint("InlinedApi")
     @RequiresApi(Build.VERSION_CODES.S)
     private fun setMockLocation(lat: Double, long: Double) {
         val locationManager = applicationContext.getSystemService(LOCATION_SERVICE) as LocationManager
@@ -189,23 +173,6 @@ class MainActivity : ComponentActivity(), OnMapReadyCallback {
                 )
                 locationManager.setTestProviderEnabled(LocationManager.GPS_PROVIDER, true)
                 locationManager.setTestProviderLocation(LocationManager.GPS_PROVIDER, mockLocation)
-
-                // Inject mock location into FusedLocationProviderClient
-                fusedLocationClient.setMockMode(true).addOnCompleteListener { modeTask ->
-                    if (modeTask.isSuccessful) {
-                        fusedLocationClient.setMockLocation(mockLocation).addOnCompleteListener { locationTask ->
-                            if (locationTask.isSuccessful) {
-                                Log.d("MockLocation", "Mock location injected successfully: $lat, $long")
-                            } else {
-                                Log.e("MockLocation", "Failed to inject mock location: ${locationTask.exception?.message}")
-                            }
-                        }
-                    } else {
-                        Log.e("MockLocation", "Failed to enable mock mode: ${modeTask.exception?.message}")
-                    }
-                }
-
-                locationManager.removeUpdates(locationListener)
 
                 // Log mock location set
                 Log.d("LocationStatus", "Mock location set to: $lat, $long")
@@ -245,18 +212,16 @@ class MainActivity : ComponentActivity(), OnMapReadyCallback {
             fusedLocationClient.requestLocationUpdates(locationRequest, object : LocationCallback() {}, null)
             logLastKnownLocation()
         }
+
+        logLastKnownLocation()
     }
 
-    @SuppressLint("MissingPermission")
     private fun logLastKnownLocation() {
         loggingJob?.cancel() // Stop any previous logging
         loggingJob = CoroutineScope(Dispatchers.IO).launch {
             while (isActive && isPaused) {
-                fusedLocationClient.lastLocation.addOnSuccessListener { location ->
-                    location?.let {
-                        lastKnownLocation = LatLng(it.latitude, it.longitude)
-                        Log.d("LocationStatus", "Updated location: ${it.latitude}, ${it.longitude}")
-                    }
+                lastKnownLocation?.let {
+                    Log.d("LocationStatus", "Updated location: ${it.latitude}, ${it.longitude}")
                 }
                 delay(2500) // Log every 2.5 seconds
             }
