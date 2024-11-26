@@ -15,11 +15,15 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -36,10 +40,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -52,6 +58,12 @@ import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
+import androidx.compose.ui.viewinterop.AndroidView
+import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.GoogleMap
+import com.google.android.gms.maps.MapView
+import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.MarkerOptions
 import java.util.concurrent.TimeUnit
 
 
@@ -60,6 +72,7 @@ class MainActivity : ComponentActivity() {
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var locationRequest: LocationRequest
     private lateinit var locationCallback: LocationCallback
+    private var googleMap: GoogleMap? = null
 
     @RequiresApi(Build.VERSION_CODES.S)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -77,9 +90,16 @@ class MainActivity : ComponentActivity() {
             override fun onLocationResult(locationResult: LocationResult) {
                 for (location in locationResult.locations) {
                     Log.d("LocationStatus", "Updated location: ${location.latitude}, ${location.longitude}")
+                    val userLocation = LatLng(location.latitude, location.longitude)
+
+                    googleMap?.let { map ->
+                        map.addMarker(MarkerOptions().position(userLocation).title("You are here"))
+                        map.moveCamera(CameraUpdateFactory.newLatLng(userLocation))
+                    }
                 }
             }
         }
+
 
         // Register for permission request result handling
         val requestPermissionLauncher = registerForActivityResult(
@@ -112,7 +132,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             AntiLife360Theme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding: PaddingValues ->
-                    PauseButton(
+                    PauseButtonWithMap(
                         modifier = Modifier.padding(innerPadding),
                         startLocationUpdates = ::startLocationUpdates,
                         stopLocationUpdates = ::stopLocationUpdates
@@ -208,13 +228,14 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun PauseButton(
+fun PauseButtonWithMap(
     modifier: Modifier = Modifier,
     startLocationUpdates: () -> Unit,
-    stopLocationUpdates: () -> Unit,
+    stopLocationUpdates: () -> Unit
 ) {
     var isClicked by remember { mutableStateOf(false) }
     val screenWidth = LocalConfiguration.current.screenWidthDp.dp
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -222,6 +243,40 @@ fun PauseButton(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        Text(
+            text = "Trace Free",
+            color = Color.Black,
+            fontSize = 32.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(top = 0.dp, bottom = 25.dp)
+        )
+
+        // Google Maps
+        AndroidView(
+            factory = { context ->
+                MapView(context).apply {
+                    onCreate(null)
+                    getMapAsync { googleMap ->
+                        googleMap.uiSettings.isZoomControlsEnabled = true
+                        googleMap.uiSettings.isMyLocationButtonEnabled = false
+                        // googleMap.isMyLocationEnabled = true
+
+                        val userLocation = LatLng(33.7839, -118.1141) // Mocked example location
+                        googleMap.addMarker(MarkerOptions().position(userLocation).title("You are here"))
+                        googleMap.moveCamera(CameraUpdateFactory.newLatLng(userLocation))
+                    }
+                }
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .aspectRatio(9 / 10f)
+                .padding(bottom = 16.dp)
+                .clip(androidx.compose.foundation.shape.RoundedCornerShape(16.dp))
+        )
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        // Pause Button
         Button(
             onClick = {
                 isClicked = !isClicked
@@ -237,13 +292,24 @@ fun PauseButton(
                 containerColor = Color(if (isClicked) 0xFF008421 else 0xFFcf142b)
             ),
             shape = CircleShape,
-            modifier = Modifier.size(130.dp)
+            modifier = Modifier.size(115.dp)
+                .aspectRatio(1 / 1f)
         ) {
+            val text = if (isClicked) "RESUME" else "PAUSE"
+
+            // Dynamically adjust font size based on text length
+            val fontSize = animateFloatAsState(
+                targetValue = if (text.length > 5) 15f else 17f,
+                animationSpec = tween(durationMillis = 300), label = ""
+            )
+
             Text(
-                text = if (isClicked) "RESUME" else "PAUSE",
+                text = text,
                 color = Color.White,
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold
+                fontSize = fontSize.value.sp,
+                fontWeight = FontWeight.Bold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
         }
 
@@ -261,11 +327,12 @@ fun PauseButton(
     }
 }
 
+
 @Preview(showBackground = true)
 @Composable
 fun PauseButtonPreview() {
     AntiLife360Theme {
-        PauseButton(
+        PauseButtonWithMap(
             startLocationUpdates = {},
             stopLocationUpdates = {}
         )
