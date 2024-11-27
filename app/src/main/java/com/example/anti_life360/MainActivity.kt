@@ -45,6 +45,7 @@ import android.os.Looper
 import android.os.SystemClock
 import androidx.annotation.RequiresApi
 import android.location.LocationListener
+import androidx.compose.ui.platform.LocalContext
 
 
 class MainActivity : ComponentActivity(), OnMapReadyCallback {
@@ -78,7 +79,7 @@ class MainActivity : ComponentActivity(), OnMapReadyCallback {
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
         // Create location request
-        locationRequest = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 5000).build()
+        locationRequest = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 2500).build()
 
         // Register for permission request
         val requestPermissionLauncher = registerForActivityResult(
@@ -132,7 +133,7 @@ class MainActivity : ComponentActivity(), OnMapReadyCallback {
             fusedLocationClient.setMockMode(false)
             loggingJob?.cancel() // Stop any previous logging
 
-            locationRequest = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 5000)
+            locationRequest = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 2500)
                 .build()
 
             fusedLocationClient.requestLocationUpdates(
@@ -359,5 +360,7 @@ fun PauseButtonWithMap(
             fontWeight = FontWeight.Normal,
             modifier = Modifier.widthIn(max = screenWidth * 0.7f)
         )
+
+        Spacer(modifier = Modifier.height(8.dp))
     }
 }
