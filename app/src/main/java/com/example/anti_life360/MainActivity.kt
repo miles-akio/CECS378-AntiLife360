@@ -129,7 +129,6 @@ class MainActivity : ComponentActivity(), OnMapReadyCallback {
             ) == PackageManager.PERMISSION_GRANTED
         ) {
             isPaused = false
-            fusedLocationClient.setMockMode(false)
             loggingJob?.cancel() // Stop any previous logging
 
             locationRequest = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 5000)
