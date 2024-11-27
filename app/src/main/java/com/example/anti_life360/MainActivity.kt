@@ -45,7 +45,6 @@ import android.os.Looper
 import android.os.SystemClock
 import androidx.annotation.RequiresApi
 import android.location.LocationListener
-import androidx.compose.ui.platform.LocalContext
 
 
 class MainActivity : ComponentActivity(), OnMapReadyCallback {
@@ -75,10 +74,8 @@ class MainActivity : ComponentActivity(), OnMapReadyCallback {
 
         locationManager  = getSystemService(Context.LOCATION_SERVICE) as LocationManager
 
-        // Initialize FusedLocationProviderClient
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
-        // Create location request
         locationRequest = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 2500).build()
 
         // Register for permission request
@@ -131,7 +128,7 @@ class MainActivity : ComponentActivity(), OnMapReadyCallback {
         ) {
             isPaused = false
             fusedLocationClient.setMockMode(false)
-            loggingJob?.cancel() // Stop any previous logging
+            loggingJob?.cancel()
 
             locationRequest = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 2500)
                 .build()
@@ -155,7 +152,7 @@ class MainActivity : ComponentActivity(), OnMapReadyCallback {
                         }
                     }
                 },
-                Looper.getMainLooper() // Run on the main thread
+                Looper.getMainLooper()
             )
         }
     }
@@ -209,7 +206,6 @@ class MainActivity : ComponentActivity(), OnMapReadyCallback {
 
                 locationManager.removeUpdates(locationListener)
 
-                // Log mock location set
                 Log.d("LocationStatus", "Mock location set to: $lat, $long")
 
                 // Update map with mock location
@@ -238,12 +234,12 @@ class MainActivity : ComponentActivity(), OnMapReadyCallback {
         // Set a mock location at the last known coordinates
         lastKnownLocation?.let {
             // setMockLocation(it.latitude, it.longitude)
-            setMockLocation(33.789, -118.293) // DEBUG PURPOSES
+            setMockLocation(33.789, -118.293) // TESTING PURPOSES
         }
 
         // Introduce a delay to ensure mock location is set before resuming updates
         CoroutineScope(Dispatchers.Main).launch {
-            delay(3000) // 1 second delay
+            delay(3000) // 3 second delay
             fusedLocationClient.requestLocationUpdates(locationRequest, object : LocationCallback() {}, null)
             logLastKnownLocation()
         }
@@ -333,7 +329,6 @@ fun PauseButtonWithMap(
         ) {
             val text = if (isClicked) "RESUME" else "PAUSE"
 
-            // Dynamically adjust font size based on text length
             val fontSize = animateFloatAsState(
                 targetValue = if (text.length > 5) 15f else 17f,
                 animationSpec = tween(durationMillis = 300), label = ""
