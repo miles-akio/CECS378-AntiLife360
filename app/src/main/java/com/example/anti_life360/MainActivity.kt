@@ -1,3 +1,11 @@
+/*
+Make sure to have developer options turned on and mock location app is set to Anti-Life360 before
+testing the app, otherwise it will not work. Important to note that simulated routes can not be
+tested while mock location settings are on, hence the need for the live demo branch. If able to
+test with a physical device, comment out line labeled "TESTING PURPOSES" and uncomment the line
+above that.
+*/
+
 package com.example.anti_life360
 
 import android.Manifest
@@ -144,6 +152,7 @@ class MainActivity : ComponentActivity(), OnMapReadyCallback {
 
                                 // Update map with the new location
                                 googleMap?.let { map ->
+                                    // Log.d("Marker", "Marker updated.")
                                     map.clear() // Clear previous markers
                                     map.addMarker(MarkerOptions().position(lastKnownLocation!!).title("You are here"))
                                     map.moveCamera(CameraUpdateFactory.newLatLngZoom(lastKnownLocation!!, 15f))

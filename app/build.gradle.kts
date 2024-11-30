@@ -66,16 +66,18 @@ android {
 }
 
 dependencies {
-
     implementation("com.google.android.gms:play-services-location:21.0.1")
     implementation("com.google.android.gms:play-services-maps:18.1.0")
+
     implementation ("androidx.compose.ui:ui:1.x.x")
     implementation ("androidx.compose.foundation:foundation:1.x.x")
     implementation ("androidx.compose.runtime:runtime:1.x.x")
     implementation ("androidx.compose.material3:material3:1.x.x")
-    implementation ("androidx.lifecycle:lifecycle-runtime-ktx:2.x.x")
     implementation ("com.google.android.gms:play-services-maps:18.x.x")
     implementation ("com.google.android.gms:play-services-location:21.x.x")
+
+    implementation ("androidx.lifecycle:lifecycle-runtime-ktx:2.x.x")
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
