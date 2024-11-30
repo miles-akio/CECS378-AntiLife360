@@ -1,3 +1,9 @@
+/*
+This code is for testing demonstrations only. Your mock location settings must be turned off,
+otherwise the location will always display at Google headquarters and the simulation route in
+extended controls will not work."
+*/
+
 package com.example.anti_life360
 
 import android.Manifest
@@ -12,7 +18,6 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -55,7 +60,7 @@ class MainActivity : ComponentActivity(), OnMapReadyCallback {
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
         // Create location request
-        locationRequest = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 5000).build()
+        locationRequest = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 2500).build()
 
         // Register for permission request
         val requestPermissionLauncher = registerForActivityResult(
@@ -115,6 +120,7 @@ class MainActivity : ComponentActivity(), OnMapReadyCallback {
                             Log.d("LocationStatus", "Updated location: ${location.latitude}, ${location.longitude}")
 
                             googleMap?.let { map ->
+                                Log.d("Marker", "Marker updated.")
                                 map.clear() // Clear previous markers
                                 map.addMarker(MarkerOptions().position(lastKnownLocation!!).title("You are here"))
                                 map.moveCamera(CameraUpdateFactory.newLatLngZoom(lastKnownLocation!!, 15f))
@@ -140,7 +146,7 @@ class MainActivity : ComponentActivity(), OnMapReadyCallback {
                 lastKnownLocation?.let {
                     Log.d("LocationStatus", "Updated location: ${it.latitude}, ${it.longitude}")
                 }
-                delay(5000) // Log every 5 seconds
+                delay(2500) // Log every 2.5 seconds
             }
         }
     }
